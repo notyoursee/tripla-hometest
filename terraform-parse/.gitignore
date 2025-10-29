@@ -1,2 +1,9 @@
 node_modules/
 .env
+
+# Terraform
+# Ignore the Terraform modules directory and lockfile (local state/cache)
+.terraform/
+**/.terraform/
+.terraform.lock.hcl
+**/.terraform.lock.hcl

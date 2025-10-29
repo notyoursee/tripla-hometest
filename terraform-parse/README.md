@@ -103,6 +103,28 @@ Notes:
 - Fill `terraform.tfvars` in each environment with `vpc_id` and `subnet_ids` before applying EKS.
 - Use a remote backend (S3 + DynamoDB) per environment in production to avoid state collisions. You can pass backend config at `terraform init -backend-config=...`.
 
+Important: AWS credentials required
+
+- Terraform will fail during `terraform plan`/`apply` if valid AWS credentials are not available on your machine. Common error looks like: "no valid credential sources for Terraform AWS Provider found." To fix locally, provide credentials using one of these options:
+	- Configure the AWS CLI (recommended):
+		```bash
+		aws configure --profile myprofile
+		export AWS_PROFILE=myprofile
+		```
+	- Export environment variables (short-lived/test):
+		```bash
+		export AWS_ACCESS_KEY_ID=AKIA...
+		export AWS_SECRET_ACCESS_KEY=...
+		export AWS_SESSION_TOKEN=... # if using temporary creds
+		```
+	- Use a secure helper such as `aws-vault`:
+		```bash
+		brew install aws-vault
+		aws-vault add myprofile
+		aws-vault exec myprofile -- terraform plan
+		```
+	After configuring credentials, re-run `terraform init` (optional) and `terraform plan`.
+
 ## Helm chart
 Location: `helm/`
 

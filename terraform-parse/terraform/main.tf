@@ -23,7 +23,10 @@ module "eks" {
   subnet_ids      = var.subnet_ids
 
   # forward node groups map so caller can control sizing per environment
-  node_groups = var.node_groups
+  # Note: newer versions of the eks module expect `eks_managed_node_groups`
+  # (previously called `node_groups`). Map our `var.node_groups` into the
+  # module's `eks_managed_node_groups` input so older variable names still work.
+  eks_managed_node_groups = var.node_groups
 
   tags = merge({
     Environment = var.environment

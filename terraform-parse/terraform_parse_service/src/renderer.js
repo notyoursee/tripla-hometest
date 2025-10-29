@@ -10,11 +10,6 @@ function renderTerraform(props) {
 
   if (!bucket) throw new Error('bucket-name is required');
 
-  const provider = `provider "aws" {
-  region = "${q(region)}"
-}
-`;
-
   const bucketRes = `resource "aws_s3_bucket" "bucket" {
   bucket = "${q(bucket)}"
   acl    = "${q(acl)}"
@@ -36,7 +31,11 @@ function renderTerraform(props) {
 }
 `;
 
-  return [provider, bucketRes, aclRes, output].join('\n');
+  // Note: do not include provider configuration here so the generated TF
+  // can be merged into an existing Terraform working directory that already
+  // provides a provider "aws". If you need a standalone file, add the
+  // provider manually or run the renderer with a separate flag.
+  return [bucketRes, aclRes, output].join('\n');
 }
 
 module.exports = { renderTerraform };

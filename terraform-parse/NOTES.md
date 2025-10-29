@@ -79,7 +79,7 @@ I first cloned the provided repository to my local machine and opened it using V
 
 Copilot was used to generate the initial API implementation based on the given requirements and instructions.
 
-For the Terraform section, I utilized Copilot to suggest structural improvements and enhance readability.
+For the Terraform section, I utilized Copilot to suggest structural improvements and enhance readability. When testing locally I encountered a Terraform provider error during `terraform plan` because AWS credentials (access key / profile) were not configured on my machine — Terraform reported "no valid credential sources". See `README.md` (Credentials) for quick local fixes (`aws configure`, `AWS_PROFILE`, `aws-vault`) and recommended workflows.
 
 For the Helm section, Copilot assisted in refactoring the YAML manifests to support reusable values in Helm templates. I also performed a double-check by running helm install tripla ./helm --dry-run --debug locally using Kind to ensure the manifests rendered correctly.
 
