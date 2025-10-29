@@ -1,11 +1,11 @@
 variable "aws_region" {
   type    = string
-  default = "ap-northeast-1"
+  default = "eu-west-1"
 }
 
 variable "cluster_name" {
   type    = string
-  default = "tripla-messy-eks"
+  default = "tripla-staging-eks"
 }
 
 variable "cluster_version" {
@@ -38,7 +38,7 @@ variable "subnet_ids" {
 
 variable "environment" {
   type    = string
-  default = "dev"
+  default = "staging"
 }
 
 variable "common_tags" {
@@ -64,7 +64,7 @@ variable "s3_force_destroy" {
 
 variable "s3_lifecycle_days" {
   type    = number
-  default = 365
+  default = 180
 }
 
 variable "s3_noncurrent_days" {

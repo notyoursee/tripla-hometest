@@ -1,19 +1,79 @@
 replicaCount: 1
 
 frontend:
+  replicaCount: 2
   image:
     repository: nginx
-    tag: latest   # should be parameterized; 'latest' is discouraged
+    tag: 1.16.0   # parameterized; avoid 'latest'
   service:
     type: LoadBalancer
     port: 80
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 250m
+      memory: 256Mi
+  livenessProbe:
+    path: "/"
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    timeoutSeconds: 1
+    successThreshold: 1
+    failureThreshold: 3
+  readinessProbe:
+    path: "/"
+    initialDelaySeconds: 5
+    periodSeconds: 5
+    timeoutSeconds: 1
+    successThreshold: 1
+    failureThreshold: 3
 
 backend:
+  replicaCount: 1
   image:
     repository: hashicorp/http-echo
-    tag: latest
+    tag: 0.2.3
   service:
     type: ClusterIP
     port: 8080
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 100m
+      memory: 128Mi
+  livenessProbe:
+    path: "/"
+    initialDelaySeconds: 5
+    periodSeconds: 10
+    timeoutSeconds: 1
+    successThreshold: 1
+    failureThreshold: 3
+  readinessProbe:
+    path: "/"
+    initialDelaySeconds: 2
+    periodSeconds: 5
+    timeoutSeconds: 1
+    successThreshold: 1
+    failureThreshold: 3
 
-resources: {} # intentionally empty
+# global default resource (used if a component doesn't set its own)
+resources: {}
+
+# HPA configurations for all components
+autoscaling:
+  backend:
+    enabled: true
+    minReplicas: 1
+    maxReplicas: 5
+    targetCPUUtilization: 75
+    targetMemoryUtilization: 75
+  frontend:
+    enabled: false  # disabled by default
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPUUtilization: 75
+    targetMemoryUtilization: 75

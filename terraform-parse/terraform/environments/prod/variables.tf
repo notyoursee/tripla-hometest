@@ -1,11 +1,11 @@
 variable "aws_region" {
   type    = string
-  default = "ap-northeast-1"
+  default = "eu-west-1"
 }
 
 variable "cluster_name" {
   type    = string
-  default = "tripla-messy-eks"
+  default = "tripla-prod-eks"
 }
 
 variable "cluster_version" {
@@ -20,8 +20,8 @@ variable "node_groups" {
   }))
   default = {
     default = {
-      desired_capacity = 2
-      instance_type    = "t3.medium"
+      desired_capacity = 3
+      instance_type    = "t3.large"
     }
   }
 }
@@ -38,7 +38,7 @@ variable "subnet_ids" {
 
 variable "environment" {
   type    = string
-  default = "dev"
+  default = "prod"
 }
 
 variable "common_tags" {
@@ -69,7 +69,7 @@ variable "s3_lifecycle_days" {
 
 variable "s3_noncurrent_days" {
   type    = number
-  default = 30
+  default = 90
 }
 
 variable "s3_tags" {

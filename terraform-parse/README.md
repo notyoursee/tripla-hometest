@@ -1,49 +1,127 @@
-<div align="center">
-   <img src="/img/logo.svg?raw=true" width=600 style="background-color:white;">
-</div>
+# Terraform-Parse (renderer + infra)
 
-# SRE Technical Take-Home Assignment : Terraform-Parse (Terraform + Helm)
+This workspace contains a small service that renders an HTTP JSON payload into a Terraform file for creating an S3 bucket, plus example Terraform and Helm artifacts used for the take-home assignment.
 
-Welcome to the Tripla SRE take-home assignment! 🧑‍💻 This exercise is designed to simulate a real-world scenario where you'll tackle challenges across infrastructure, platform engineering, and automation.
+This README explains how to build, test and run the `terraform_parse_service` locally, how to exercise its endpoints, and where to find the Terraform and Helm example deployments.
 
-⚠️ **Before you begin**, please review the main [FAQ](/README.md#frequently-asked-questions). It contains important information, **including our specific guidelines on how to submit your solution.**
+## Prerequisites
+- Node.js (16+) and npm installed locally. Use Homebrew or nvm on macOS.
+- (Optional) Helm and a Kubernetes cluster (minikube/kind) to deploy the Helm chart.
+- (Optional) Terraform to run the example infra.
 
-## Repo structure
-- `terraform/` : Terraform code (intentionally imperfect) for an EKS cluster and an S3 bucket .
-- `helm/` : A Helm chart (intentionally buggy) that deploys an API service .
+## Service: terraform_parse_service
+Location: `terraform_parse_service/`
 
-## Candidate Tasks
-### Create `Terraform-Parse` Service
-1. Please Create a backend service to render an API request into terraform file
-   (You can use any language/framework you’re comfortable with (e.g., Python/Flask, Node/Express, Go/Fiber). Keep it minimal.)
-2. Service needs to receive rest api request (`POST` method) with certain payload.
-    ```
-    {
-    "payload":{
-        "properties":{
-            "aws-region":"eu-west-1",
-            "acl":"private",
-            "bucket-name": "tripla-bucket"
-        }
-    }
-    }
-    ```
-3. Parse this payload and render to Terraform file (.tf) for S3 bucket creation. Resources created should at least include:
-    - provider
-    - aws_s3_bucket
-    - aws_s3_bucket_acl
-4. Please put your code to folder `terraform_parse_service`
+This is a minimal Node/Express service that accepts POST requests and renders Terraform for an S3 bucket. It exposes two endpoints:
 
-### Infrastructure (Terraform)
-5. You have provided a set of Terraform code to create an EKS. Please review the code, identify issues or design flaws.
-6. Adjust or refactor be safe and maintainable for multiple environments.
+- `POST /render` — returns the generated Terraform as plain text
+- `POST /render_and_write` — renders and writes the Terraform file to the repo `terraform/` folder as `s3_bucket.tf`
 
-### Platform (Kubernetes + Helm)
-7. You are provided a set of Helm code. Please review and deploy `Terraform-Parse` service into a Kubernetes cluster (local kind/minikube is fine).
-8. Debug and fix if you find services don't route properly.
-9. Improve other aspects as you see fit.
+### Payload format
+Send JSON with this shape in the request body:
 
-## Minimum Deliverables
-1.  A link to your Git repository containing the complete solution.
-2.  Clear instructions in the `README.md` on how to build, test, and run your service.
-3. `NOTES.md` with explanations for API service creation, Terraform fixes, Helm fixes, multi-env thoughts, and any AI usage.
+```json
+{
+	"payload":{
+		"properties":{
+			"aws-region":"eu-west-1",
+			"acl":"private",
+			"bucket-name":"tripla-bucket"
+		}
+	}
+}
+```
+
+### Install and run (local)
+1. Change into the service folder and install dependencies:
+
+```bash
+cd terraform_parse_service
+npm install
+```
+
+2. Start the service:
+
+```bash
+npm start
+# By default the service listens on port 3001
+```
+
+3. Health check:
+
+```bash
+curl http://localhost:3001/health
+```
+
+### Examples
+
+Render terraform and print it:
+
+```bash
+curl -sS -X POST http://localhost:3001/render \
+	-H "Content-Type: application/json" \
+	-d '{"payload":{"properties":{"aws-region":"eu-west-1","acl":"private","bucket-name":"tripla-bucket"}}}'
+```
+
+Render and write the file to `terraform/s3_bucket.tf`:
+
+```bash
+curl -sS -X POST http://localhost:3001/render_and_write \
+	-H "Content-Type: application/json" \
+	-d '{"payload":{"properties":{"aws-region":"eu-west-1","acl":"private","bucket-name":"tripla-bucket"}}}'
+```
+
+The `render_and_write` endpoint returns JSON with the written file path.
+
+### Quick test without starting HTTP server
+If you only want to test the renderer logic (no HTTP), run the included script from the repository root (requires Node):
+
+```bash
+node terraform_parse_service/test_render.js
+```
+
+It prints the generated Terraform to stdout.
+
+## Terraform example (multi-environment)
+Location: `terraform/`
+
+This repository includes example Terraform code and three isolated environment folders under `terraform/environments/`:
+- `dev/`
+- `staging/`
+- `prod/`
+
+Each environment folder is an independent Terraform configuration you can run separately. Typical workflow (for `dev`):
+
+```bash
+cd terraform/environments/dev
+terraform init
+terraform plan
+terraform apply
+```
+
+Notes:
+- Fill `terraform.tfvars` in each environment with `vpc_id` and `subnet_ids` before applying EKS.
+- Use a remote backend (S3 + DynamoDB) per environment in production to avoid state collisions. You can pass backend config at `terraform init -backend-config=...`.
+
+## Helm chart
+Location: `helm/`
+
+Small Helm chart with `frontend` and `backend` deployments. I added resource requests/limits, and liveness/readiness probes in `values.yaml` and templates. To render templates locally:
+
+```bash
+helm template ./helm --values helm/values.yaml
+```
+
+To install into a cluster (minikube/kind):
+
+```bash
+helm install test-release ./helm --values helm/values.yaml
+kubectl get pods
+kubectl describe pod <pod>
+```
+
+## Troubleshooting
+- If `npm install` or `node` commands fail, install Node.js (Homebrew: `brew install node` or preferred nvm workflow).
+- If `terraform init` complains about backend, create appropriate backend configuration or remove backend block before testing locally.
+
+

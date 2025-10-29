@@ -1,18 +1,29 @@
+{{- range $component, $config := .Values.autoscaling }}
+{{- if $config.enabled }}
+---
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: backend-hpa
+  name: {{ $component }}-hpa
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: backend
-  minReplicas: 1
-  maxReplicas: 5
+    name: {{ $component }}
+  minReplicas: {{ $config.minReplicas }}
+  maxReplicas: {{ $config.maxReplicas }}
   metrics:
     - type: Resource
       resource:
         name: cpu
         target:
           type: Utilization
-          averageUtilization: 50
+          averageUtilization: {{ $config.targetCPUUtilization }}
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: {{ $config.targetMemoryUtilization }}
+{{- end }}
+{{- end }}

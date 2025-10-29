@@ -1,3 +1,7 @@
+// Environment: dev
+// This file re-uses the root module files via copy for isolation.
+
+// Copy of root main.tf for dev environment. Edit values in terraform.tfvars.
 terraform {
   required_version = ">= 1.0.0"
   required_providers {
@@ -12,7 +16,6 @@ provider "aws" {
   region = var.aws_region
 }
 
-// Configure EKS module using variables for multi-env and safe defaults
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
   version = "19.0.0"
@@ -22,7 +25,6 @@ module "eks" {
   vpc_id          = var.vpc_id
   subnet_ids      = var.subnet_ids
 
-  # forward node groups map so caller can control sizing per environment
   node_groups = var.node_groups
 
   tags = merge({
@@ -30,7 +32,6 @@ module "eks" {
   }, var.common_tags)
 }
 
-// Safer S3 bucket configuration. Avoid hardcoded names and public ACL.
 resource "aws_s3_bucket" "static_assets" {
   bucket = var.s3_bucket_name != "" ? var.s3_bucket_name : "${var.cluster_name}-${var.environment}-static"
   acl    = var.s3_acl

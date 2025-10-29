@@ -1,17 +1,54 @@
-\
-    apiVersion: apps/v1
-    kind: Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+spec:
+  replicas: {{ .Values.backend.replicaCount | default 1 }}
+  template:
     metadata:
-      name: backend
+      labels:
+        app: backend
     spec:
-      replicas: 1
-      template:
-        metadata:
-          labels:
-            app: backend
-        spec:
-          containers:
-            - name: backend
-              image: hashicorp/http-echo:0.2.3
-              args:
-                - "-text=hello"
+      containers:
+        - name: backend
+          image: {{ printf "%s:%s" (default "hashicorp/http-echo" .Values.backend.image.repository) (default "0.2.3" .Values.backend.image.tag) | quote }}
+          ports:
+            - containerPort: {{ .Values.backend.service.port | default 8080 }}
+          args:
+            - "-text=hello"
+          resources:
+            {{- with .Values.backend.resources }}
+            requests:
+              cpu: {{ .requests.cpu }}
+              memory: {{ .requests.memory }}
+            limits:
+              cpu: {{ .limits.cpu }}
+              memory: {{ .limits.memory }}
+            {{- else }}
+            {{- with .Values.resources }}
+            requests:
+              cpu: {{ .requests.cpu }}
+              memory: {{ .requests.memory }}
+            limits:
+              cpu: {{ .limits.cpu }}
+              memory: {{ .limits.memory }}
+            {{- end }}
+            {{- end }}
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.backend.livenessProbe.path | quote }}
+              port: {{ .Values.backend.service.port | default 8080 }}
+            initialDelaySeconds: {{ .Values.backend.livenessProbe.initialDelaySeconds | default 5 }}
+            periodSeconds: {{ .Values.backend.livenessProbe.periodSeconds | default 10 }}
+            timeoutSeconds: {{ .Values.backend.livenessProbe.timeoutSeconds | default 1 }}
+            failureThreshold: {{ .Values.backend.livenessProbe.failureThreshold | default 3 }}
+            successThreshold: {{ .Values.backend.livenessProbe.successThreshold | default 1 }}
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.backend.readinessProbe.path | quote }}
+              port: {{ .Values.backend.service.port | default 8080 }}
+            initialDelaySeconds: {{ .Values.backend.readinessProbe.initialDelaySeconds | default 2 }}
+            periodSeconds: {{ .Values.backend.readinessProbe.periodSeconds | default 5 }}
+            timeoutSeconds: {{ .Values.backend.readinessProbe.timeoutSeconds | default 1 }}
+            failureThreshold: {{ .Values.backend.readinessProbe.failureThreshold | default 3 }}
+            successThreshold: {{ .Values.backend.readinessProbe.successThreshold | default 1 }}

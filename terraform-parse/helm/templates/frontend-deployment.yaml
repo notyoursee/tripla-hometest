@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: frontend
 spec:
-  replicas: 2
+  replicas: {{ .Values.frontend.replicaCount | default 2 }}
   template:
     metadata:
       labels:
@@ -11,6 +11,42 @@ spec:
     spec:
       containers:
         - name: nginx
-          image: nginx:1.16.0
+          image: {{ printf "%s:%s" (default "nginx" .Values.frontend.image.repository) (default "1.16.0" .Values.frontend.image.tag) | quote }}
           ports:
-            - containerPort: 80
+            - containerPort: {{ .Values.frontend.service.port | default 80 }}
+          resources:
+            {{- with .Values.frontend.resources }}
+            requests:
+              cpu: {{ .requests.cpu }}
+              memory: {{ .requests.memory }}
+            limits:
+              cpu: {{ .limits.cpu }}
+              memory: {{ .limits.memory }}
+            {{- else }}
+            {{- with .Values.resources }}
+            requests:
+              cpu: {{ .requests.cpu }}
+              memory: {{ .requests.memory }}
+            limits:
+              cpu: {{ .limits.cpu }}
+              memory: {{ .limits.memory }}
+            {{- end }}
+            {{- end }}
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.frontend.livenessProbe.path | quote }}
+              port: {{ .Values.frontend.service.port | default 80 }}
+            initialDelaySeconds: {{ .Values.frontend.livenessProbe.initialDelaySeconds | default 10 }}
+            periodSeconds: {{ .Values.frontend.livenessProbe.periodSeconds | default 10 }}
+            timeoutSeconds: {{ .Values.frontend.livenessProbe.timeoutSeconds | default 1 }}
+            failureThreshold: {{ .Values.frontend.livenessProbe.failureThreshold | default 3 }}
+            successThreshold: {{ .Values.frontend.livenessProbe.successThreshold | default 1 }}
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.frontend.readinessProbe.path | quote }}
+              port: {{ .Values.frontend.service.port | default 80 }}
+            initialDelaySeconds: {{ .Values.frontend.readinessProbe.initialDelaySeconds | default 5 }}
+            periodSeconds: {{ .Values.frontend.readinessProbe.periodSeconds | default 5 }}
+            timeoutSeconds: {{ .Values.frontend.readinessProbe.timeoutSeconds | default 1 }}
+            failureThreshold: {{ .Values.frontend.readinessProbe.failureThreshold | default 3 }}
+            successThreshold: {{ .Values.frontend.readinessProbe.successThreshold | default 1 }}

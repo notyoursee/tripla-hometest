@@ -1,11 +1,11 @@
 variable "aws_region" {
   type    = string
-  default = "ap-northeast-1"
+  default = "eu-west-1"
 }
 
 variable "cluster_name" {
   type    = string
-  default = "tripla-messy-eks"
+  default = "tripla-dev-eks"
 }
 
 variable "cluster_version" {
@@ -20,8 +20,8 @@ variable "node_groups" {
   }))
   default = {
     default = {
-      desired_capacity = 2
-      instance_type    = "t3.medium"
+      desired_capacity = 1
+      instance_type    = "t3.small"
     }
   }
 }
@@ -64,7 +64,7 @@ variable "s3_force_destroy" {
 
 variable "s3_lifecycle_days" {
   type    = number
-  default = 365
+  default = 90
 }
 
 variable "s3_noncurrent_days" {

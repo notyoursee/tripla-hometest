@@ -3,9 +3,10 @@ kind: Service
 metadata:
   name: frontend-svc
 spec:
-  type: ClusterIP
+  type: {{ .Values.frontend.service.type | default "ClusterIP" }}
   ports:
-    - port: 80
-      targetPort: 80
+    - port: {{ .Values.frontend.service.port | default 80 }}
+      targetPort: {{ .Values.frontend.service.port | default 80 }}
   selector:
-    app: frontend   # doesn't match frontend-app label used in deployment
+    app: frontend-app
+
